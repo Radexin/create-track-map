@@ -228,13 +228,12 @@ function startMapUpdates() {
       }
 
       let schedule = ""
-      console.log(train.schedule);
       if(train.schedule != null){
         schedule = "<hr><span class=\"on-schedule\">On schedule</span><br>"
         train.schedule.instructions.forEach((instruction, i) => {
             if(instruction.instructionType == "Destination"){
                 schedule += "<span>";
-                if(i == schedule.currentEntry){
+                if(i == train.schedule.currentEntry){
                     schedule += "=> "
                 }
                 schedule += instruction.stationName + "</span><br>";
