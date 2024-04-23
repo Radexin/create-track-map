@@ -41,6 +41,9 @@ body {
   background-color: #444;
   color: white;
 }
+.on-schedule {
+  text-decoration: underline;
+}
 
 .station-icon .fill {
   fill: var(--station-color);

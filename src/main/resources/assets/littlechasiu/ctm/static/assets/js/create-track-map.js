@@ -227,6 +227,21 @@ function startMapUpdates() {
         }
       }
 
+      let schedule = ""
+      console.log(train.schedule);
+      if(train.schedule != null){
+        schedule = "<hr><span class=\"on-schedule\">On schedule</span><br>"
+        train.schedule.instructions.forEach((instruction, i) => {
+            if(instruction.instructionType == "Destination"){
+                schedule += "<span>";
+                if(i == schedule.currentEntry){
+                    schedule += "=> "
+                }
+                schedule += instruction.stationName + "</span><br>";
+            }
+        })
+      }
+
       train.cars.forEach((car, i) => {
         let parts = car.portal
           ? [
@@ -259,7 +274,7 @@ function startMapUpdates() {
             .bindTooltip(
               (train.cars.length === 1
                 ? train.name
-                : `${train.name} <span class="car-number">${i + 1}</span>`) + scheduleHtml,
+                : `${train.name} <span class="car-number">${i + 1}</span>`) + schedule,
               {
                 className: "train-name",
                 direction: "right",

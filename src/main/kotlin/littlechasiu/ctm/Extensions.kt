@@ -93,6 +93,46 @@ val Carriage.sendable
       },
     )
 
+fun getInstructions(instructions: List<ScheduleEntry>): ArrayList<ScheduleInstruction> {
+  val result: ArrayList<ScheduleInstruction> = ArrayList()
+
+  for(entry in instructions){
+    if(entry.instruction is DestinationInstruction){
+      result.add(
+        ScheduleInstructionDestination(
+          stationName = (entry.instruction as DestinationInstruction).summary.second.string,
+        )
+      )
+    }
+    if(entry.instruction is ChangeTitleInstruction){
+      result.add(
+        ScheduleInstructionNameChange(
+          newName = (entry.instruction as ChangeTitleInstruction).scheduleTitle,
+        )
+      )
+    }
+    if(entry.instruction is ChangeThrottleInstruction){
+      result.add(
+        ScheduleInstructionThrottleChange(
+          throttle = (entry.instruction as ChangeThrottleInstruction).summary.second.string,
+        )
+      )
+    }
+
+  }
+  return result
+}
+
+val ScheduleRuntime.sendable
+  get() = schedule?.let {
+    CreateSchedule(
+            cycling = it.cyclic,
+            instructions = getInstructions(it.entries),
+            paused = paused,
+            currentEntry = currentEntry,
+    )
+  }
+
 val Train.sendable
   get() =
     CreateTrain(
@@ -100,75 +140,8 @@ val Train.sendable
       name = name.string,
       owner = null,
       cars = carriages.map { it.sendable }.toList(),
+      speed = speed,
       backwards = speed < 0,
       stopped = speed == 0.0,
-      schedule = runtime.sendable
-    )
-
-val ScheduleInstruction.sendable
-  get() =
-    CreateScheduleInstruction(
-      destination = if (this is DestinationInstruction) filter else null,
-      newTitle = if (this is ChangeTitleInstruction) scheduleTitle else null,
-      newThrottle = if (this is ChangeThrottleInstruction) (throttle * 100).toString() + "%" else null,
-    )
-
-val ScheduleWaitCondition.sendable
-  get() =
-    CreateScheduleCondition(
-      scheduledDelay =
-        if (this is ScheduledDelay) (value.toString() + unit.suffix)
-        else null,
-      timeOfDay =
-        if (this is TimeOfDayCondition) summary.second.string + " every " + (rotation / 1000) + " hour(s)"
-        else null,
-      fluidCargoCondition =
-        if (this is FluidThresholdCondition) getItem(0).displayName.string + " " + operator.ordinal + " " + threshold + " buckets"
-        else null,
-      itemCargoCondition =
-        if (this is ItemThresholdCondition) getItem(0).displayName.string + " " + operator.ordinal + " " + threshold
-        else null,
-      redstoneLink =
-        if (this is RedstoneLinkCondition)
-          "Frequency: " + freq.get(true).stack.displayName.string + "; " + freq.get(false).stack.displayName.string +
-              (if (lowActivation()) " is not powered" else " is powered")
-        else null,
-      playersSeated =
-        if (this is PlayerPassengerCondition) target.toString() + (if (canOvershoot()) " or above" else " exactly")
-        else null,
-      cargoInactivity =
-        if (this is IdleCargoCondition) (value.toString() + unit.suffix)
-        else null,
-      chunkUnloaded =
-        if (this is StationUnloadedCondition) "No info"
-        else null,
-      stationPowered =
-        if (this is StationPoweredCondition) "No info"
-        else null,
-    )
-
-val ScheduleEntry.sendable
-  get() =
-    CreateScheduleEntry(
-      instruction = instruction.sendable,
-      conditions = conditions.map { a -> a.map { b -> b.sendable } },
-    )
-
-val ScheduleRuntime.sendable
-  get() =
-    if (schedule == null)
-      null
-    else
-      CreateSchedule(
-        currentEntry = currentEntry,
-        loops = schedule.cyclic,
-        entries = schedule.entries.map { it.sendable })
-
-val GlobalTrainDisplayData.TrainDeparturePrediction.sendable
-  get() =
-    StationSummaryEntry(
-      scheduleTitle = scheduleTitle.string,
-      destination = destination,
-      trainName = train.name.string,
-      ticks = ticks,
+      schedule = runtime.sendable,
     )

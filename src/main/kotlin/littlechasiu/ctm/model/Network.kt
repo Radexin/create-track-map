@@ -1,11 +1,14 @@
 package littlechasiu.ctm.model
 
+import com.simibubi.create.content.trains.entity.Navigation
+import com.simibubi.create.content.trains.schedule.Schedule
 import com.simibubi.create.content.trains.signal.SignalBlock.SignalType
 import com.simibubi.create.content.trains.signal.SignalBlockEntity.SignalState
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.*
@@ -130,6 +133,33 @@ data class TrainCar(
 )
 
 @Serializable
+sealed class ScheduleInstruction(
+    val instructionType: String,
+)
+@Serializable
+data class ScheduleInstructionDestination(
+    val stationName : String,
+) : ScheduleInstruction(instructionType = "Destination")
+
+@Serializable
+data class ScheduleInstructionThrottleChange(
+    val throttle : String,
+) : ScheduleInstruction(instructionType = "ThrottleChange")
+
+@Serializable
+data class ScheduleInstructionNameChange(
+    val newName : String,
+) : ScheduleInstruction(instructionType = "NameChange")
+
+@Serializable
+data class CreateSchedule(
+  val instructions: List<ScheduleInstruction>,
+  val cycling: Boolean,
+  val paused: Boolean,
+  val currentEntry: Int,
+)
+
+@Serializable
 data class CreateTrain(
   @Serializable(with = UUIDSerializer::class)
   val id: UUID,
@@ -138,6 +168,7 @@ data class CreateTrain(
   val cars: List<TrainCar>,
   val backwards: Boolean,
   val stopped: Boolean,
+  val speed: Double,
   val schedule: CreateSchedule?,
 )
 
