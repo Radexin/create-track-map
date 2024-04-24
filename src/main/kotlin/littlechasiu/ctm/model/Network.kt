@@ -32,10 +32,10 @@ data class Point(
 
 @Serializable
 data class Path(
-  val start: Point,
+  val start: DimensionLocation,
   val firstControlPoint: Point,
   val secondControlPoint: Point,
-  val end: Point,
+  val end: DimensionLocation,
 )
 
 @Serializable

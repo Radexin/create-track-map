@@ -296,6 +296,15 @@ function startMapUpdates() {
           }).addTo(lmgr.layer(dim, "trains"))
         }
       })
+
+      train.currentPath.forEach((path, i) => {
+        L.polyline([xz(path.start.location), xz(path.end.location)], {
+          className: "track path",
+          interactive: false,
+          pane: "trains",
+        }).addTo(lmgr.layer(path.start.dimension, "trains"))
+      })
     })
+
   })
 }

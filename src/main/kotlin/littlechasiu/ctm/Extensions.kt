@@ -160,14 +160,10 @@ fun getCurrentTrainPath(navigation: Navigation?) : List<Path>{
   @Suppress("UNCHECKED_CAST")
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
-  //val currentPath = navigation.getCurrentPath()
-  println("NAVIGATION:")
-  println(currentPath.size)
-
   currentPath.forEach{
     result.add(Path(
-            start = it.first.location.sendable,
-            end = it.second.location.sendable,
+            start = it.first.dimensionLocation,
+            end = it.second.dimensionLocation,
             firstControlPoint = it.first.normal.sendable,
             secondControlPoint = it.first.normal.sendable,
     ))

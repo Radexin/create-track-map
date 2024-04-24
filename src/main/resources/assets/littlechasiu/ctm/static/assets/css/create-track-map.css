@@ -25,6 +25,9 @@ body {
 .track {
   stroke: var(--track-free);
 }
+.track.path {
+  stroke: #0000ff;
+}
 
 .train-name,
 .station-name {
