@@ -23,7 +23,6 @@ import com.simibubi.create.content.trains.schedule.condition.TimeOfDayCondition
 import com.simibubi.create.content.trains.schedule.destination.ChangeThrottleInstruction
 import com.simibubi.create.content.trains.schedule.destination.ChangeTitleInstruction
 import com.simibubi.create.content.trains.schedule.destination.DestinationInstruction
-import com.simibubi.create.content.trains.station.GlobalStation
 import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction
 import littlechasiu.ctm.model.*
 import net.minecraft.core.Vec3i
@@ -31,8 +30,6 @@ import net.createmod.catnip.data.Couple
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
-import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.jvm.javaField
 
 fun <T> MutableSet<T>.replaceWith(other: Collection<T>) {
   this.retainAll { other.contains(it) }
@@ -45,10 +42,6 @@ operator fun <T> Couple<T>.component2(): T = this.get(false)
 val Vec3.sendable: Point
   get() =
     Point(x = x, y = y, z = z)
-
-val Vec3i.sendable: Point
-  get() =
-    Point(x = x.toDouble(), y = y.toDouble(), z = z.toDouble())
 
 val ResourceKey<Level>.string: String
   get() {
@@ -141,17 +134,8 @@ val ScheduleRuntime.sendable
     )
   }
 
-private inline fun Navigation.getCurrentPath() : List<Couple<TrackNode>> {
-  return Navigation::class.java.getDeclaredField("currentPath").let{
-    it.isAccessible = true
-    val value = it.get(this)
-    @Suppress("UNCHECKED_CAST")
-    return@let value as List<Couple<TrackNode>>
-  }
-}
-
-fun getCurrentTrainPath(navigation: Navigation?) : List<Path>{
-  val result : ArrayList<Path> = ArrayList()
+fun getCurrentTrainPath(navigation: Navigation?) : List<Edge>{
+  val result : ArrayList<Edge> = ArrayList()
   if(navigation == null){
     return result
   }
@@ -161,12 +145,10 @@ fun getCurrentTrainPath(navigation: Navigation?) : List<Path>{
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
   currentPath.forEach{
-    result.add(Path(
-            start = it.first.dimensionLocation,
-            end = it.second.dimensionLocation,
-            firstControlPoint = it.first.normal.sendable,
-            secondControlPoint = it.first.normal.sendable,
-    ))
+    val trackEdge : TrackEdge = navigation.train.graph.getConnectionsFrom(it.first).get(it.second) ?: return@forEach
+    val edge = trackEdge.sendable
+    if(edge is Edge)
+    result.add(edge)
   }
   return result
 }

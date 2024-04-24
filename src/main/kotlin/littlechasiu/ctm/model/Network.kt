@@ -167,7 +167,7 @@ data class CreateTrain(
   val stopped: Boolean,
   val speed: Double,
   val schedule: CreateSchedule?,
-  val currentPath: List<Path>,
+  val currentPath: List<Edge>,
 )
 
 @Serializable

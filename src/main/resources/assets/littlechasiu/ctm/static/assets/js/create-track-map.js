@@ -229,6 +229,24 @@ function startMapUpdates() {
 
       let schedule = ""
       if(train.schedule != null){
+
+        train.currentPath.forEach((trk) => {
+            const path = trk.path
+            if (path.length === 4) {
+              L.curve(["M", xz(path[0]), "C", xz(path[1]), xz(path[2]), xz(path[3])], {
+                className: "track path",
+                interactive: false,
+                pane: "trains",
+              }).addTo(lmgr.layer(trk.dimension, "trains"))
+            } else if (path.length === 2) {
+              L.polyline([xz(path[0]), xz(path[1])], {
+                className: "track path",
+                interactive: false,
+                pane: "trains",
+              }).addTo(lmgr.layer(trk.dimension, "trains"))
+            }
+          })
+
         schedule = "<hr><span class=\"on-schedule\">On schedule</span><br>"
         train.schedule.instructions.forEach((instruction, i) => {
             if(instruction.instructionType == "Destination"){
@@ -295,14 +313,6 @@ function startMapUpdates() {
             pane: "trains",
           }).addTo(lmgr.layer(dim, "trains"))
         }
-      })
-
-      train.currentPath.forEach((path, i) => {
-        L.polyline([xz(path.start.location), xz(path.end.location)], {
-          className: "track path",
-          interactive: false,
-          pane: "trains",
-        }).addTo(lmgr.layer(path.start.dimension, "trains"))
       })
     })
 
