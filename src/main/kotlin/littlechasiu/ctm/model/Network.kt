@@ -1,14 +1,11 @@
 package littlechasiu.ctm.model
 
-import com.simibubi.create.content.trains.entity.Navigation
-import com.simibubi.create.content.trains.schedule.Schedule
 import com.simibubi.create.content.trains.signal.SignalBlock.SignalType
 import com.simibubi.create.content.trains.signal.SignalBlockEntity.SignalState
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.*
@@ -153,7 +150,6 @@ data class ScheduleInstructionNameChange(
 
 @Serializable
 data class CreateSchedule(
-  /*TODO store instructions as a queue => next instruction at first place*/
   val instructions: List<ScheduleInstruction>,
   val cycling: Boolean,
   val paused: Boolean,
@@ -171,6 +167,7 @@ data class CreateTrain(
   val stopped: Boolean,
   val speed: Double,
   val schedule: CreateSchedule?,
+  val currentPath: List<Path>,
 )
 
 @Serializable
