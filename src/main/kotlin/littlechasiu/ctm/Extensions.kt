@@ -6,6 +6,7 @@ import com.simibubi.create.content.trains.entity.Navigation
 import com.simibubi.create.content.trains.entity.Train
 import com.simibubi.create.content.trains.entity.TravellingPoint
 import com.simibubi.create.content.trains.graph.TrackEdge
+import com.simibubi.create.content.trains.graph.TrackGraph
 import com.simibubi.create.content.trains.graph.TrackNode
 import com.simibubi.create.content.trains.graph.TrackNodeLocation
 import com.simibubi.create.content.trains.schedule.ScheduleEntry
@@ -23,8 +24,11 @@ import com.simibubi.create.content.trains.schedule.condition.TimeOfDayCondition
 import com.simibubi.create.content.trains.schedule.destination.ChangeThrottleInstruction
 import com.simibubi.create.content.trains.schedule.destination.ChangeTitleInstruction
 import com.simibubi.create.content.trains.schedule.destination.DestinationInstruction
+import com.simibubi.create.content.trains.track.BezierConnection
 import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction
+import kotlinx.css.li
 import littlechasiu.ctm.model.*
+import net.minecraft.core.Direction
 import net.minecraft.core.Vec3i
 import net.createmod.catnip.data.Couple
 import net.minecraft.resources.ResourceKey
@@ -131,38 +135,83 @@ val ScheduleRuntime.sendable
             instructions = getInstructions(it.entries),
             paused = paused,
             currentEntry = currentEntry,
+            arrivalCountdown = 0.0
     )
   }
 
-fun getCurrentTrainPath(navigation: Navigation?) : List<Edge>{
+fun getNextEdge(graph: TrackGraph, trackNode: TrackNode, trackEdge: TrackEdge, direction: Vec3) : TrackEdge?{
+  var result : TrackEdge? = null
+  var biggest = Double.MIN_VALUE
+  graph.getConnectionsFrom(trackNode).forEach { key, value ->
+    if (key == trackEdge) {
+      return@forEach
+    }
+    val dot = value.getDirection(true).dot(direction)
+    if(dot > biggest && dot > 0){
+      biggest = dot
+      result = value
+    }
+  }
+  return result
+}
+fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, List<Edge> >{
   val result : ArrayList<Edge> = ArrayList()
+  val debug : ArrayList<Edge> = ArrayList()
   if(navigation == null){
-    return result
+    return Pair(result, debug)
   }
   val field = Navigation::class.java.getDeclaredField("currentPath")
   field.isAccessible = true
   @Suppress("UNCHECKED_CAST")
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
-  currentPath.forEach{
-    val trackEdge : TrackEdge = navigation.train.graph.getConnectionsFrom(it.first).get(it.second) ?: return@forEach
+  currentPath.forEachIndexed{i, obj ->
+    val trackEdge : TrackEdge = navigation.train.graph.getConnectionsFrom(obj.first).get(obj.second) ?: return@forEachIndexed
     val edge = trackEdge.sendable
-    if(edge is Edge)
+    if(edge !is Edge) {return@forEachIndexed}
     result.add(edge)
+
+    if(i < currentPath.size - 1){
+      var tEdge : TrackEdge = trackEdge
+
+      var direction: Vec3 = Vec3(0.0,0.0,0.0)
+      var reachedEnd: Boolean = false
+      val MAX_PREDICTIONS: Int = 50;
+
+      var j = 0
+      while(!reachedEnd) {
+        direction = tEdge.getDirection(false)
+        tEdge = getNextEdge(navigation.train.graph, tEdge.node2, tEdge, direction) ?: return@forEachIndexed
+
+        j++
+        if(tEdge.node1 == currentPath[i + 1].first){
+          reachedEnd = true // incase tEdge is the next scheduled edge
+        }else{
+          debug.add(tEdge.sendable as Edge)
+        }
+
+        if(tEdge.node2 == currentPath[i + 1].first || j > MAX_PREDICTIONS){
+          reachedEnd = true
+        }
+      }
+    }
   }
-  return result
+  return Pair(result, debug)
 }
 
-val Train.sendable
-  get() =
-    CreateTrain(
-      id = id,
-      name = name.string,
-      owner = null,
-      cars = carriages.map { it.sendable }.toList(),
-      speed = speed,
-      backwards = speed < 0,
-      stopped = speed == 0.0,
-      schedule = runtime.sendable,
-      currentPath = getCurrentTrainPath(navigation),
+val Train.sendable: CreateTrain
+  get() {
+    val (currentPath, debug) = getCurrentTrainPath(navigation)
+    return CreateTrain(
+            id = id,
+            name = name.string,
+            owner = null,
+            cars = carriages.map { it.sendable }.toList(),
+            speed = speed,
+            backwards = speed < 0,
+            stopped = speed == 0.0,
+            schedule = runtime.sendable,
+            currentPath = currentPath,
+            debug = debug
     )
+  }

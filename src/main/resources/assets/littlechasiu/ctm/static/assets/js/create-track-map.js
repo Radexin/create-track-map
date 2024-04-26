@@ -247,6 +247,23 @@ function startMapUpdates() {
             }
           })
 
+          train.debug.forEach((trk) => {
+              const path = trk.path
+              if (path.length === 4) {
+                L.curve(["M", xz(path[0]), "C", xz(path[1]), xz(path[2]), xz(path[3])], {
+                  className: "track debug",
+                  interactive: false,
+                  pane: "trains",
+                }).addTo(lmgr.layer(trk.dimension, "trains"))
+              } else if (path.length === 2) {
+                L.polyline([xz(path[0]), xz(path[1])], {
+                  className: "track debug",
+                  interactive: false,
+                  pane: "trains",
+                }).addTo(lmgr.layer(trk.dimension, "trains"))
+              }
+            })
+
         schedule = "<hr><span class=\"on-schedule\">On schedule</span><br>"
         train.schedule.instructions.forEach((instruction, i) => {
             if(instruction.instructionType == "Destination"){

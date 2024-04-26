@@ -29,6 +29,10 @@ body {
   stroke: #0000ff;
 }
 
+.track.debug {
+  stroke: #00ff00;
+}
+
 .train-name,
 .station-name {
   font-family: var(--ui-font);

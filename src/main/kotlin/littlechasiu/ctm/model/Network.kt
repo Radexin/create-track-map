@@ -154,6 +154,7 @@ data class CreateSchedule(
   val cycling: Boolean,
   val paused: Boolean,
   val currentEntry: Int,
+  val arrivalCountdown: Double,
 )
 
 @Serializable
@@ -168,6 +169,7 @@ data class CreateTrain(
   val speed: Double,
   val schedule: CreateSchedule?,
   val currentPath: List<Edge>,
+  val debug: List<Edge>
 )
 
 @Serializable
