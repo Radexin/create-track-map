@@ -277,58 +277,46 @@ function startMapUpdates() {
       }
 
       train.cars.forEach((car, i) => {
-        let parts = car.portal
-          ? [
-              [car.leading.dimension, [xz(car.leading.location), xz(car.portal.from.location)]],
-              [car.trailing.dimension, [xz(car.portal.to.location), xz(car.trailing.location)]],
-            ]
-          : [[car.leading.dimension, [xz(car.leading.location), xz(car.trailing.location)]]]
+        if(car.leading){ // lazily solves the missing carriage data (ignore the problem)
+            let parts = car.portal
+              ? [
+                  [car.leading.dimension, [xz(car.leading.location), xz(car.portal.from.location)]],
+                  [car.trailing.dimension, [xz(car.portal.to.location), xz(car.trailing.location)]],
+                ]
+              : [[car.leading.dimension, [xz(car.leading.location), xz(car.trailing.location)]]]
 
-        const scheduleHtml =
-          train.schedule ?
-            "<ul class=\"train-schedule\">" +
-              train.schedule.entries.map((entry, i) => {
-                let entryHtml = "";
-                const className = train.schedule.currentEntry === i ? "train-schedule-current" : ""
-
-                if (entry.instruction.destination) entryHtml += htmlEscape(entry.instruction.destination);
-
-                return `<li class="${className}">${entryHtml}</li>`;
-              }).join("\n") +
-              "</ul>" :
-          "";
-
-        parts.map(([dim, part]) =>
-          L.polyline(part, {
-            weight: 12,
-            lineCap: "square",
-            className: "train" + (leadCar === i ? " lead-car" : ""),
-            pane: "trains",
-          })
-            .bindTooltip(
-              (train.cars.length === 1
-                ? train.name
-                : `${train.name} <span class="car-number">${i + 1}</span>`) + schedule,
-              {
-                className: "train-name",
-                direction: "right",
-                offset: L.point(12, 0),
-                opacity: 0.7,
-              }
+            parts.map(([dim, part]) =>
+              L.polyline(part, {
+                weight: 12,
+                lineCap: "square",
+                className: "train" + (leadCar === i ? " lead-car" : ""),
+                pane: "trains",
+              })
+                .bindTooltip(
+                  (train.cars.length === 1
+                    ? train.name
+                    : `${train.name} <span class="car-number">${i + 1}</span>`) + schedule,
+                  {
+                    className: "train-name",
+                    direction: "right",
+                    offset: L.point(12, 0),
+                    opacity: 0.7,
+                  }
+                )
+                .addTo(lmgr.layer(dim, "trains"))
             )
-            .addTo(lmgr.layer(dim, "trains"))
-        )
 
-        if (leadCar === i) {
-          let [dim, edge] = train.backwards ? parts[parts.length - 1] : parts[0]
-          let [head, tail] = train.backwards ? [edge[1], edge[0]] : [edge[0], edge[1]]
-          let angle = 180 + (Math.atan2(tail[0] - head[0], tail[1] - head[1]) * 180) / Math.PI
+            if (leadCar === i) {
+              let [dim, edge] = train.backwards ? parts[parts.length - 1] : parts[0]
+              let [head, tail] = train.backwards ? [edge[1], edge[0]] : [edge[0], edge[1]]
+              let angle = 180 + (Math.atan2(tail[0] - head[0], tail[1] - head[1]) * 180) / Math.PI
 
-          L.marker(head, {
-            icon: headIcon,
-            rotationAngle: angle,
-            pane: "trains",
-          }).addTo(lmgr.layer(dim, "trains"))
+              L.marker(head, {
+                icon: headIcon,
+                rotationAngle: angle,
+                pane: "trains",
+              }).addTo(lmgr.layer(dim, "trains"))
+            }
         }
       })
     })

@@ -24,6 +24,7 @@ import com.simibubi.create.content.trains.schedule.condition.TimeOfDayCondition
 import com.simibubi.create.content.trains.schedule.destination.ChangeThrottleInstruction
 import com.simibubi.create.content.trains.schedule.destination.ChangeTitleInstruction
 import com.simibubi.create.content.trains.schedule.destination.DestinationInstruction
+import com.simibubi.create.content.trains.station.GlobalStation
 import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction
 import littlechasiu.ctm.model.*
 import net.createmod.catnip.data.Couple
@@ -179,11 +180,17 @@ private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNo
   return result
 }
 
+private fun getEdgeFromStation(station: GlobalStation, graph: TrackGraph) : TrackEdge {
+  val firstNode = graph.locateNode(station.edgeLocation.first)
+  val secondNode = graph.locateNode(station.edgeLocation.second)
+  return graph.getConnection(Couple.create(firstNode, secondNode))
+}
+
 private fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, List<Edge> >{
   val graph = navigation?.train?.graph
   val result : ArrayList<Edge> = ArrayList()
   val debug : ArrayList<Edge> = ArrayList()
-  if(navigation == null || graph == null){
+  if(navigation == null || graph == null || navigation.destination == null){
     return Pair(result, debug)
   }
   val field = Navigation::class.java.getDeclaredField("currentPath")
@@ -192,11 +199,18 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, Lis
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
   val firstEdge: TrackEdge = graph.getConnection(navigation.train.endpointEdges.first)
+  val lastEdge: TrackEdge = getEdgeFromStation(navigation.destination, graph)
+  if(firstEdge == lastEdge){
+    return Pair(result, debug)
+  }
+
   result.add(firstEdge.sendable as Edge)
+  result.add(lastEdge.sendable as Edge)
   if(currentPath.size > 0){
     result.addAll(pathFromTo(firstEdge, graph, currentPath[0].first))
+    result.addAll(pathFromTo(graph.getConnection(currentPath[currentPath.size - 1]), graph, lastEdge.node1))
   }else{
-
+    result.addAll(pathFromTo(firstEdge, graph, lastEdge.node1))
   }
 
   currentPath.forEachIndexed{i, obj ->

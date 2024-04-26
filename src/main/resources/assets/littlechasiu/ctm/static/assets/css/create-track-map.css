@@ -26,11 +26,11 @@ body {
   stroke: var(--track-free);
 }
 .track.path {
-  stroke: #0000ff;
+  stroke: #0000ff33;
 }
 
 .track.debug {
-  stroke: #00ff00;
+  stroke: #00ff0033;
 }
 
 .train-name,
