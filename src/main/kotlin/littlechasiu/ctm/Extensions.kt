@@ -186,12 +186,11 @@ private fun getEdgeFromStation(station: GlobalStation, graph: TrackGraph) : Trac
   return graph.getConnection(Couple.create(firstNode, secondNode))
 }
 
-private fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, List<Edge> >{
+private fun getCurrentTrainPath(navigation: Navigation?) : List<Edge>{
   val graph = navigation?.train?.graph
   val result : ArrayList<Edge> = ArrayList()
-  val debug : ArrayList<Edge> = ArrayList()
   if(navigation == null || graph == null || navigation.destination == null){
-    return Pair(result, debug)
+    return result
   }
   val field = Navigation::class.java.getDeclaredField("currentPath")
   field.isAccessible = true
@@ -201,12 +200,12 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, Lis
   val firstEdge: TrackEdge = graph.getConnection(navigation.train.endpointEdges.first)
   val lastEdge: TrackEdge = getEdgeFromStation(navigation.destination, graph)
   if(firstEdge == lastEdge){
-    return Pair(result, debug)
+    return result
   }
 
   result.add(firstEdge.sendable as Edge)
   result.add(lastEdge.sendable as Edge)
-  if(currentPath.size > 0){
+  if(currentPath.isNotEmpty()){
     result.addAll(pathFromTo(firstEdge, graph, currentPath[0].first))
     result.addAll(pathFromTo(graph.getConnection(currentPath[currentPath.size - 1]), graph, lastEdge.node1))
   }else{
@@ -223,12 +222,11 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, Lis
       result.addAll(pathFromTo(trackEdge, graph, currentPath[i + 1].first))
     }
   }
-  return Pair(result, debug)
+  return result
 }
 
 val Train.sendable: CreateTrain
   get() {
-    val (currentPath, debug) = getCurrentTrainPath(navigation)
     return CreateTrain(
             id = id,
             name = name.string,
@@ -238,7 +236,6 @@ val Train.sendable: CreateTrain
             backwards = speed < 0,
             stopped = speed == 0.0,
             schedule = runtime.sendable,
-            currentPath = currentPath,
-            debug = debug
+            currentPath = getCurrentTrainPath(navigation),
     )
   }
