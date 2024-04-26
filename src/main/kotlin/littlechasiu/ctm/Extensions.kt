@@ -24,12 +24,8 @@ import com.simibubi.create.content.trains.schedule.condition.TimeOfDayCondition
 import com.simibubi.create.content.trains.schedule.destination.ChangeThrottleInstruction
 import com.simibubi.create.content.trains.schedule.destination.ChangeTitleInstruction
 import com.simibubi.create.content.trains.schedule.destination.DestinationInstruction
-import com.simibubi.create.content.trains.track.BezierConnection
 import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction
-import kotlinx.css.li
 import littlechasiu.ctm.model.*
-import net.minecraft.core.Direction
-import net.minecraft.core.Vec3i
 import net.createmod.catnip.data.Couple
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.level.Level
@@ -139,7 +135,7 @@ val ScheduleRuntime.sendable
     )
   }
 
-fun getNextEdge(graph: TrackGraph, trackNode: TrackNode, trackEdge: TrackEdge, direction: Vec3) : TrackEdge?{
+private fun getNextEdge(graph: TrackGraph, trackNode: TrackNode, trackEdge: TrackEdge, direction: Vec3) : TrackEdge?{
   var result : TrackEdge? = null
   var biggest = Double.MIN_VALUE
   graph.getConnectionsFrom(trackNode).forEach { key, value ->
@@ -154,10 +150,40 @@ fun getNextEdge(graph: TrackGraph, trackNode: TrackNode, trackEdge: TrackEdge, d
   }
   return result
 }
-fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, List<Edge> >{
+
+private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNode) : ArrayList<Edge> {
+  val result = ArrayList<Edge>()
+
+  var tEdge: TrackEdge = startEdge
+
+  var direction = Vec3(0.0, 0.0, 0.0)
+  var reachedEnd = false
+  val MAX_PREDICTIONS = 50;
+
+  var j = 0
+  while (!reachedEnd) {
+    direction = tEdge.getDirection(false)
+    tEdge = getNextEdge(graph, tEdge.node2, tEdge, direction) ?: return result
+
+    j++
+    if (tEdge.node1.netId == endNode.netId) {
+      reachedEnd = true // incase tEdge is the next scheduled edge
+    } else {
+      result.add(tEdge.sendable as Edge)
+    }
+
+    if (tEdge.node2.netId == endNode.netId || j > MAX_PREDICTIONS) {
+      reachedEnd = true
+    }
+  }
+  return result
+}
+
+private fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, List<Edge> >{
+  val graph = navigation?.train?.graph
   val result : ArrayList<Edge> = ArrayList()
   val debug : ArrayList<Edge> = ArrayList()
-  if(navigation == null){
+  if(navigation == null || graph == null){
     return Pair(result, debug)
   }
   val field = Navigation::class.java.getDeclaredField("currentPath")
@@ -165,35 +191,22 @@ fun getCurrentTrainPath(navigation: Navigation?) : Pair< List<Edge>, List<Edge> 
   @Suppress("UNCHECKED_CAST")
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
+  val firstEdge: TrackEdge = graph.getConnection(navigation.train.endpointEdges.first)
+  result.add(firstEdge.sendable as Edge)
+  if(currentPath.size > 0){
+    result.addAll(pathFromTo(firstEdge, graph, currentPath[0].first))
+  }else{
+
+  }
+
   currentPath.forEachIndexed{i, obj ->
-    val trackEdge : TrackEdge = navigation.train.graph.getConnectionsFrom(obj.first).get(obj.second) ?: return@forEachIndexed
+    val trackEdge : TrackEdge = graph.getConnectionsFrom(obj.first).get(obj.second) ?: return@forEachIndexed
     val edge = trackEdge.sendable
     if(edge !is Edge) {return@forEachIndexed}
     result.add(edge)
 
     if(i < currentPath.size - 1){
-      var tEdge : TrackEdge = trackEdge
-
-      var direction: Vec3 = Vec3(0.0,0.0,0.0)
-      var reachedEnd: Boolean = false
-      val MAX_PREDICTIONS: Int = 50;
-
-      var j = 0
-      while(!reachedEnd) {
-        direction = tEdge.getDirection(false)
-        tEdge = getNextEdge(navigation.train.graph, tEdge.node2, tEdge, direction) ?: return@forEachIndexed
-
-        j++
-        if(tEdge.node1 == currentPath[i + 1].first){
-          reachedEnd = true // incase tEdge is the next scheduled edge
-        }else{
-          debug.add(tEdge.sendable as Edge)
-        }
-
-        if(tEdge.node2 == currentPath[i + 1].first || j > MAX_PREDICTIONS){
-          reachedEnd = true
-        }
-      }
+      result.addAll(pathFromTo(trackEdge, graph, currentPath[i + 1].first))
     }
   }
   return Pair(result, debug)
