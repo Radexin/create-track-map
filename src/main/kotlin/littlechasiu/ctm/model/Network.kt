@@ -31,14 +31,6 @@ data class Point(
 )
 
 @Serializable
-data class Path(
-  val start: DimensionLocation,
-  val firstControlPoint: Point,
-  val secondControlPoint: Point,
-  val end: DimensionLocation,
-)
-
-@Serializable
 data class Edge(
   val dimension: String,
   val path: List<Point>,
@@ -154,7 +146,14 @@ data class CreateSchedule(
   val cycling: Boolean,
   val paused: Boolean,
   val currentEntry: Int,
-  val arrivalCountdown: Double,
+)
+
+@Serializable
+data class Path(
+    val path : List<Edge>,
+    val arrivingInSeconds : Int,
+    val tripDistance : Double,
+    val distanceToDrive : Double
 )
 
 @Serializable
@@ -168,7 +167,7 @@ data class CreateTrain(
   val stopped: Boolean,
   val speed: Double,
   val schedule: CreateSchedule?,
-  val currentPath: List<Edge>,
+  val currentPath: Path,
 )
 
 @Serializable

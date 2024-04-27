@@ -132,7 +132,6 @@ val ScheduleRuntime.sendable
             instructions = getInstructions(it.entries),
             paused = paused,
             currentEntry = currentEntry,
-            arrivalCountdown = 0.0
     )
   }
 
@@ -189,11 +188,11 @@ private fun getEdgeFromStation(station: GlobalStation, graph: TrackGraph) : Trac
   return graph.getConnection(Couple.create(firstNode, secondNode))
 }
 
-private fun getCurrentTrainPath(navigation: Navigation?) : List<Edge>{
+private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   val graph = navigation?.train?.graph
   val result : ArrayList<Edge> = ArrayList()
   if(navigation == null || graph == null || navigation.destination == null){
-    return result
+    return Path(result, -1,0.0,0.0)
   }
   val field = Navigation::class.java.getDeclaredField("currentPath")
   field.isAccessible = true
@@ -203,7 +202,7 @@ private fun getCurrentTrainPath(navigation: Navigation?) : List<Edge>{
   val firstEdge: TrackEdge = graph.getConnection(navigation.train.endpointEdges.first)
   val lastEdge: TrackEdge = getEdgeFromStation(navigation.destination, graph)
   if(firstEdge == lastEdge){
-    return result
+    return Path(result, -1,0.0,0.0)
   }
 
   result.add(firstEdge.sendable as Edge)
@@ -225,7 +224,7 @@ private fun getCurrentTrainPath(navigation: Navigation?) : List<Edge>{
       result.addAll(pathFromTo(trackEdge, graph, currentPath[i + 1].first))
     }
   }
-  return result
+  return Path(result, -1,navigation.distanceStartedAt,navigation.distanceToDestination)
 }
 
 val Train.sendable: CreateTrain

@@ -230,7 +230,7 @@ function startMapUpdates() {
       let schedule = ""
       if(train.schedule != null){
 
-        train.currentPath.forEach((trk) => {
+        train.currentPath.path.forEach((trk) => {
             const path = trk.path
             if (path.length === 4) {
               L.curve(["M", xz(path[0]), "C", xz(path[1]), xz(path[2]), xz(path[3])], {
