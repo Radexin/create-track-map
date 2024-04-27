@@ -170,7 +170,10 @@ private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNo
     if (tEdge.node1.netId == endNode.netId) {
       reachedEnd = true // incase tEdge is the next scheduled edge
     } else {
-      result.add(tEdge.sendable as Edge)
+      val edge = tEdge.sendable
+      if(edge is Edge) { // incase edge is portal, then ignore it
+        result.add(edge)
+      }
     }
 
     if (tEdge.node2.netId == endNode.netId || j > MAX_PREDICTIONS) {

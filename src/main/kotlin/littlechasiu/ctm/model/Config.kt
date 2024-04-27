@@ -27,6 +27,8 @@ data class TrackColors(
   val reserved: String = "pink",
   @EncodeDefault
   val free: String = "white",
+  @EncodeDefault
+  val path: String = "#2244FF",
 )
 
 @Serializable

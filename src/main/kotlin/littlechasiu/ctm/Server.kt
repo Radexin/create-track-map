@@ -154,6 +154,7 @@ class Server {
               "track-occupied" to Color(mapStyle.colors.track.occupied),
               "track-reserved" to Color(mapStyle.colors.track.reserved),
               "track-free" to Color(mapStyle.colors.track.free),
+              "track-path" to Color(mapStyle.colors.track.path),
               "signal-green" to Color(mapStyle.colors.signal.green),
               "signal-yellow" to Color(mapStyle.colors.signal.yellow),
               "signal-red" to Color(mapStyle.colors.signal.red),
