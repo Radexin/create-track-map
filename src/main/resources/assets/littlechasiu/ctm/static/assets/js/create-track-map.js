@@ -214,8 +214,15 @@ function startMapUpdates() {
   })
 
   dmgr.onTrainStatus(({ trains }) => {
-    lmgr.clearTrains()
+    //lmgr.clearTrains()
     tmgr.update(trains)
+
+    let layerGroup = lmgr.dimension("minecraft:overworld")["trains"]
+    layerGroup.eachLayer(function (layer) {
+      if(layer.options.className === "track path" || layer.options.className === "train-head"){
+        layerGroup.removeLayer(layer)
+      }
+    });
 
     trains.forEach((train) => {
       let leadCar = null
@@ -260,7 +267,7 @@ function startMapUpdates() {
       }
 
       train.cars.forEach((car, i) => {
-        if(car.leading){ // lazily solves the missing carriage data (ignore the problem)
+        if(car.leading !== undefined){ // lazily solves the missing carriage data that sometimes happen for derailed trains (ignore the problem)
             let parts = car.portal
               ? [
                   [car.leading.dimension, [xz(car.leading.location), xz(car.portal.from.location)]],
@@ -268,26 +275,42 @@ function startMapUpdates() {
                 ]
               : [[car.leading.dimension, [xz(car.leading.location), xz(car.trailing.location)]]]
 
-            parts.map(([dim, part]) =>
-              L.polyline(part, {
-                weight: 12,
-                lineCap: "square",
-                className: "train" + (leadCar === i ? " lead-car" : ""),
-                pane: "trains",
-              })
-                .bindTooltip(
-                  (train.cars.length === 1
-                    ? train.name
-                    : `${train.name} <span class="car-number">${i + 1}</span>`) + schedule,
-                  {
-                    className: "train-name",
-                    direction: "right",
-                    offset: L.point(12, 0),
-                    opacity: 0.7,
+
+
+              parts.map(([dim, part]) => {
+
+                let layerGroup = lmgr.dimension(dim)["trains"]
+                let className = "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id
+                let foundCar = false
+
+                layerGroup.eachLayer(function(layer) {
+                  if (layer.options.className === className) {
+                    layer.setLatLngs(part)
+                    foundCar = true
                   }
-                )
-                .addTo(lmgr.layer(dim, "trains"))
-            )
+                });
+
+                if (!foundCar) {
+                  L.polyline(part, {
+                    weight: 12,
+                    lineCap: "square",
+                    className: "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id,
+                    pane: "trains",
+                  })
+                    .bindTooltip(
+                      (train.cars.length === 1
+                        ? train.name
+                        : `${train.name} <span class="car-number">${i + 1}</span>`) + schedule,
+                      {
+                        className: "train-name",
+                        direction: "right",
+                        offset: L.point(12, 0),
+                        opacity: 0.7,
+                      }
+                    )
+                    .addTo(lmgr.layer(dim, "trains"))
+                }
+              })
 
             if (leadCar === i) {
               let [dim, edge] = train.backwards ? parts[parts.length - 1] : parts[0]
@@ -296,13 +319,13 @@ function startMapUpdates() {
 
               L.marker(head, {
                 icon: headIcon,
+                className: "train-head",
                 rotationAngle: angle,
                 pane: "trains",
               }).addTo(lmgr.layer(dim, "trains"))
             }
-        }
+          }
+        })
       })
     })
-
-  })
 }
