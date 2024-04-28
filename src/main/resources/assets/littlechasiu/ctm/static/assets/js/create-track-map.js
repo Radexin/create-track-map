@@ -7,12 +7,14 @@ let map = L.map("map", {
 map.createPane("tracks")
 map.createPane("blocks")
 map.createPane("signals")
+map.createPane("trainPaths")
 map.createPane("trains")
 map.createPane("portals")
 map.createPane("stations")
 map.getPane("tracks").style.zIndex = 300
 map.getPane("blocks").style.zIndex = 500
 map.getPane("signals").style.zIndex = 600
+map.getPane("trainPaths").style.zIndex = 650
 map.getPane("trains").style.zIndex = 700
 map.getPane("portals").style.zIndex = 800
 map.getPane("stations").style.zIndex = 800
@@ -215,15 +217,9 @@ function startMapUpdates() {
 
   dmgr.onTrainStatus(({ trains }) => {
     //lmgr.clearTrains()
+    lmgr.clearTrainPaths()
     tmgr.update(trains)
-
-    let layerGroup = lmgr.dimension("minecraft:overworld")["trains"]
-    layerGroup.eachLayer(function (layer) {
-      if(layer.options.className === "track path" || layer.options.className === "train-head"){
-        layerGroup.removeLayer(layer)
-      }
-    });
-
+    let whitelist = []
     trains.forEach((train) => {
       let leadCar = null
       if (!train.stopped) {
@@ -243,22 +239,22 @@ function startMapUpdates() {
               L.curve(["M", xz(path[0]), "C", xz(path[1]), xz(path[2]), xz(path[3])], {
                 className: "track path",
                 interactive: false,
-                pane: "trains",
-              }).addTo(lmgr.layer(trk.dimension, "trains"))
+                pane: "trainPaths",
+              }).addTo(lmgr.layer(trk.dimension, "trainPaths"))
             } else if (path.length === 2) {
               L.polyline([xz(path[0]), xz(path[1])], {
                 className: "track path",
                 interactive: false,
-                pane: "trains",
-              }).addTo(lmgr.layer(trk.dimension, "trains"))
+                pane: "trainPaths",
+              }).addTo(lmgr.layer(trk.dimension, "trainPaths"))
             }
           })
 
         schedule = "<hr><span class=\"on-schedule\">On schedule</span><br>"
         train.schedule.instructions.forEach((instruction, i) => {
-            if(instruction.instructionType == "Destination"){
+            if(instruction.instructionType === "Destination"){
                 schedule += "<span>";
-                if(i == train.schedule.currentEntry){
+                if(i === train.schedule.currentEntry){
                     schedule += "=> "
                 }
                 schedule += instruction.stationName + "</span><br>";
@@ -276,7 +272,6 @@ function startMapUpdates() {
               : [[car.leading.dimension, [xz(car.leading.location), xz(car.trailing.location)]]]
 
 
-
               parts.map(([dim, part]) => {
 
                 let layerGroup = lmgr.dimension(dim)["trains"]
@@ -286,12 +281,13 @@ function startMapUpdates() {
                 layerGroup.eachLayer(function(layer) {
                   if (layer.options.className === className) {
                     layer.setLatLngs(part)
+                    whitelist.push(layer)
                     foundCar = true
                   }
                 });
 
                 if (!foundCar) {
-                  L.polyline(part, {
+                  let layer = L.polyline(part, {
                     weight: 12,
                     lineCap: "square",
                     className: "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id,
@@ -309,6 +305,7 @@ function startMapUpdates() {
                       }
                     )
                     .addTo(lmgr.layer(dim, "trains"))
+                  whitelist.push(layer)
                 }
               })
 
@@ -317,15 +314,23 @@ function startMapUpdates() {
               let [head, tail] = train.backwards ? [edge[1], edge[0]] : [edge[0], edge[1]]
               let angle = 180 + (Math.atan2(tail[0] - head[0], tail[1] - head[1]) * 180) / Math.PI
 
-              L.marker(head, {
+              let layer = L.marker(head, {
                 icon: headIcon,
                 className: "train-head",
                 rotationAngle: angle,
                 pane: "trains",
               }).addTo(lmgr.layer(dim, "trains"))
+              whitelist.push(layer)
             }
           }
         })
       })
+    Array.from(Object.values(lmgr.actualLayers)).forEach((obj) => {
+      obj.trains.eachLayer(function(layer) {
+        if (!whitelist.includes(layer)) {
+          obj.trains.removeLayer(layer)
+        }
+      });
+    })
     })
 }

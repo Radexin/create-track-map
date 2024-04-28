@@ -13,6 +13,7 @@ class LayerManager {
       portals: L.layerGroup([]).addTo(map),
       stations: L.layerGroup([]).addTo(map),
       trains: L.layerGroup([]).addTo(map),
+      trainPaths: L.layerGroup([]).addTo(map),
     }
 
     this.actualLayers = {}
@@ -55,6 +56,7 @@ class LayerManager {
         portals: L.layerGroup([]),
         stations: L.layerGroup([]),
         trains: L.layerGroup([]),
+        trainPaths: L.layerGroup([]),
       }
       let layer = (this.dimensionLayers[name] = L.layerGroup([]))
       layer.name = name
@@ -134,7 +136,10 @@ class LayerManager {
   _clearLayers(key) {
     Array.from(Object.values(this.actualLayers)).forEach((obj) => obj[key].clearLayers())
   }
-
+  
+  clearTrainPaths() {
+    this._clearLayers("trainPaths")
+  }
   clearTracks() {
     this._clearLayers("tracks")
   }

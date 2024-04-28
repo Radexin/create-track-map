@@ -163,5 +163,6 @@ data class Config @OptIn(ExperimentalSerializationApi::class) constructor(
     "portals" to LayerConfig(label = "Portals"),
     "stations" to LayerConfig(label = "Stations"),
     "trains" to LayerConfig(label = "Trains"),
+    "trainPaths" to LayerConfig(label = "Train navigation"),
   ),
 )
