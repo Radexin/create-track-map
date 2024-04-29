@@ -230,8 +230,11 @@ function startMapUpdates() {
         }
       }
 
-      if(train.schedule != null){
-        train.currentPath.path.forEach((trk) => {
+      if(openTrainInfos[train.id] != null){
+        openTrainInfos[train.id].content(getTrainInfoHTML(train))
+
+        if(train.schedule != null){
+          train.currentPath.path.forEach((trk) => {
             const path = trk.path
             if (path.length === 4) {
               L.curve(["M", xz(path[0]), "C", xz(path[1]), xz(path[2]), xz(path[3])], {
@@ -247,9 +250,8 @@ function startMapUpdates() {
               }).addTo(lmgr.layer(trk.dimension, "trainPaths"))
             }
           })
-      }
-      if(openTrainInfos[train.id] != null){
-        openTrainInfos[train.id].content(getTrainInfoHTML(train))
+        }
+
       }
       train.cars.forEach((car, i) => {
         if(car.leading !== undefined){ // lazily solves the missing carriage data that sometimes happen for derailed trains (ignore the problem)
