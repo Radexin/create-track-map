@@ -98,29 +98,21 @@ val Carriage.sendable
 fun getInstructions(instructions: List<ScheduleEntry>): ArrayList<ScheduleInstruction> {
   val result: ArrayList<ScheduleInstruction> = ArrayList()
 
-  for(entry in instructions){
-    if(entry.instruction is DestinationInstruction){
-      result.add(
-        ScheduleInstructionDestination(
-          stationName = (entry.instruction as DestinationInstruction).summary.second.string,
-        )
-      )
+  for (entry in instructions) {
+    when (val instruction = entry.instruction) {
+      is DestinationInstruction -> {
+        val stationName = instruction.summary.second.string
+        result.add(ScheduleInstructionDestination(stationName = stationName))
+      }
+      is ChangeTitleInstruction -> {
+        val newName = instruction.scheduleTitle
+        result.add(ScheduleInstructionNameChange(newName = newName))
+      }
+      is ChangeThrottleInstruction -> {
+        val throttle = instruction.summary.second.string
+        result.add(ScheduleInstructionThrottleChange(throttle = throttle))
+      }
     }
-    if(entry.instruction is ChangeTitleInstruction){
-      result.add(
-        ScheduleInstructionNameChange(
-          newName = (entry.instruction as ChangeTitleInstruction).scheduleTitle,
-        )
-      )
-    }
-    if(entry.instruction is ChangeThrottleInstruction){
-      result.add(
-        ScheduleInstructionThrottleChange(
-          throttle = (entry.instruction as ChangeThrottleInstruction).summary.second.string,
-        )
-      )
-    }
-
   }
   return result
 }

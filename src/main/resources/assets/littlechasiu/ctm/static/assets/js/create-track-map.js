@@ -230,9 +230,7 @@ function startMapUpdates() {
         }
       }
 
-      let schedule = ""
       if(train.schedule != null){
-
         train.currentPath.path.forEach((trk) => {
             const path = trk.path
             if (path.length === 4) {
@@ -249,19 +247,10 @@ function startMapUpdates() {
               }).addTo(lmgr.layer(trk.dimension, "trainPaths"))
             }
           })
-
-        schedule = "<hr><span class=\"on-schedule\">On schedule</span><br>"
-        train.schedule.instructions.forEach((instruction, i) => {
-            if(instruction.instructionType === "Destination"){
-                schedule += "<span>";
-                if(i === train.schedule.currentEntry){
-                    schedule += "=> "
-                }
-                schedule += instruction.stationName + "</span><br>";
-            }
-        })
       }
-
+      if(openTrainInfos[train.id] != null){
+        openTrainInfos[train.id].content(getTrainInfoHTML(train))
+      }
       train.cars.forEach((car, i) => {
         if(car.leading !== undefined){ // lazily solves the missing carriage data that sometimes happen for derailed trains (ignore the problem)
             let parts = car.portal
@@ -271,43 +260,44 @@ function startMapUpdates() {
                 ]
               : [[car.leading.dimension, [xz(car.leading.location), xz(car.trailing.location)]]]
 
+            parts.map(([dim, part]) => {
+              let layerGroup = lmgr.dimension(dim)["trains"]
+              let className = "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id
+              let foundCar = false
 
-              parts.map(([dim, part]) => {
-
-                let layerGroup = lmgr.dimension(dim)["trains"]
-                let className = "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id
-                let foundCar = false
-
-                layerGroup.eachLayer(function(layer) {
-                  if (layer.options.className === className) {
-                    layer.setLatLngs(part)
-                    whitelist.push(layer)
-                    foundCar = true
-                  }
-                });
-
-                if (!foundCar) {
-                  let layer = L.polyline(part, {
-                    weight: 12,
-                    lineCap: "square",
-                    className: "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id,
-                    pane: "trains",
-                  })
-                    .bindTooltip(
-                      (train.cars.length === 1
-                        ? train.name
-                        : `${train.name} <span class="car-number">${i + 1}</span>`) + schedule,
-                      {
-                        className: "train-name",
-                        direction: "right",
-                        offset: L.point(12, 0),
-                        opacity: 0.7,
-                      }
-                    )
-                    .addTo(lmgr.layer(dim, "trains"))
+              layerGroup.eachLayer(function(layer) {
+                if (layer.options.className === className) {
+                  layer.setLatLngs(part)
                   whitelist.push(layer)
+                  foundCar = true
                 }
-              })
+              });
+
+              if (!foundCar) {
+                let layer = L.polyline(part, {
+                  weight: 12,
+                  lineCap: "square",
+                  className: "train" + (leadCar === i ? " lead-car" : " carriage-" + i) + " " + train.id,
+                  pane: "trains",
+                }).addEventListener("click",function(event){
+                  if(!openTrainInfos[train.id]) {
+                    openTrainInfo(train, dim)
+                  }
+                },true).bindTooltip(
+                    (train.cars.length === 1
+                      ? train.name
+                      : `${train.name} <span class="car-number">${i + 1}</span>`),
+                    {
+                      className: "train-name",
+                      direction: "right",
+                      offset: L.point(12, 0),
+                      opacity: 0.7,
+                    }
+                  )
+                  .addTo(lmgr.layer(dim, "trains"))
+                whitelist.push(layer)
+              }
+            })
 
             if (leadCar === i) {
               let [dim, edge] = train.backwards ? parts[parts.length - 1] : parts[0]
@@ -319,18 +309,65 @@ function startMapUpdates() {
                 className: "train-head",
                 rotationAngle: angle,
                 pane: "trains",
-              }).addTo(lmgr.layer(dim, "trains"))
+              }).addTo(lmgr.layer(dim,"trains"))
               whitelist.push(layer)
             }
           }
         })
       })
-    Array.from(Object.values(lmgr.actualLayers)).forEach((obj) => {
-      obj.trains.eachLayer(function(layer) {
-        if (!whitelist.includes(layer)) {
-          obj.trains.removeLayer(layer)
+      Array.from(Object.values(lmgr.actualLayers)).forEach((obj) => {
+        obj.trains.eachLayer(function(layer) {
+          if (!whitelist.includes(layer)) {
+            obj.trains.removeLayer(layer)
+          }
+        });
+      })
+    })
+}
+
+function getTrainInfoHTML(train){
+  let schedule = "<div class='train-name'><h3>" + train.name + "</h3><hr>"
+
+  if(train.schedule) {
+    let currentInstruction = train.schedule.currentEntry
+    let instructions = train.schedule.instructions
+    schedule += "<span class=\"on-schedule\">On schedule</span><br>"
+    if(instructions[currentInstruction].instructionType === "Destination") {
+      schedule += "<span>Next destination: " + instructions[currentInstruction].stationName + "</span>"
+    }else{
+      schedule += "<span>Next destination: Unknown</span>"
+    }
+    schedule += "<br>"
+    schedule += "<span>Time until arrival: Unknown</span><br>"
+
+    if(train.currentPath.tripDistance === 0){
+      schedule += "<span>Distance to destination: Arrived</span>"
+    }else {
+      schedule += "<span>Distance to destination: " + Math.floor(train.currentPath.distanceToDrive) + "/" + Math.floor(train.currentPath.tripDistance) + " blocks</span>"
+    }
+    schedule += "<hr>"
+
+    train.schedule.instructions.forEach((instruction, i) => {
+      if (instruction.instructionType === "Destination") {
+        schedule += "<span>" + instruction.stationName;
+        if (i === train.schedule.currentEntry) {
+          schedule += "&#8592;"
         }
-      });
+        schedule += "</span><br>";
+      }
     })
-    })
+
+  }
+  schedule += "</div>"
+  return schedule
+}
+
+let openTrainInfos = {}
+function openTrainInfo(train){
+  var win =  L.control.window(map,{content:getTrainInfoHTML(train)}).show()
+  win._closeButton.addEventListener("click", function(event){
+    delete openTrainInfos[train.id]
+  })
+
+  openTrainInfos[train.id] = win
 }
