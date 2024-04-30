@@ -1,5 +1,6 @@
 package littlechasiu.ctm
 
+import com.ibm.icu.impl.locale.Extension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -9,6 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import littlechasiu.ctm.model.Config
+import littlechasiu.ctm.model.CreateTrain
 import net.minecraft.commands.Commands
 import net.minecraftforge.event.RegisterCommandsEvent
 import net.minecraftforge.event.server.ServerStartedEvent
@@ -81,6 +83,7 @@ object TrackMap {
     watcher.enable = config.enable
     server.enable = config.enable
     watcher.watchInterval = config.watchIntervalSeconds.seconds
+    CreateTrain.enableNavigationTracks = config.enableNavigationTracks
     server.port = config.serverPort
     server.mapStyle = config.mapStyle
     server.mapView = config.mapView

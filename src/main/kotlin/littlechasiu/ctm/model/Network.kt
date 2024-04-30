@@ -1,9 +1,11 @@
 package littlechasiu.ctm.model
 
+import com.simibubi.create.content.trains.entity.Navigation
 import com.simibubi.create.content.trains.signal.SignalBlock.SignalType
 import com.simibubi.create.content.trains.signal.SignalBlockEntity.SignalState
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -169,7 +171,11 @@ data class CreateTrain(
   val speed: Double,
   val schedule: CreateSchedule?,
   val currentPath: Path,
-)
+){
+  companion object {
+    var enableNavigationTracks: Boolean = true
+  }
+}
 
 @Serializable
 data class TrainStatus(
