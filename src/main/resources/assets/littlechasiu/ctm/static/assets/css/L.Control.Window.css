@@ -39,18 +39,39 @@
 }
 
 .control-window{
+    min-width: 300px;
     background-color: #ffffff;
     color: #353535;
-    font: 14px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font-family: var(--ui-font);
+    font-weight: bold;
+    font-size: 15px;
 }
 
+.control-window .destination{
+    padding-left: 8px;
+    padding-right: 8px;
+    width: 100%;
+    border-radius: 8px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.control-window .marked{
+    background-color: #353535;
+    color: #ffffff;
+    width: 100%;
+}
 
 .leaflet-control-window .titlebar{
-    min-height: 38px;
     cursor: grab;
     cursor: -webkit-grab;
     cursor: -moz-grab;
-    padding: 10px 45px 10px 10px;
+    padding: 10px 10px 10px 10px;
+}
+
+.leaflet-control-window .title{
+    max-height: 0px;
 }
 
 .leaflet-control-window .close {
@@ -82,7 +103,6 @@
 
 .leaflet-control-window .content{
     padding: 8px;
-    margin-top: -10px;
     z-index:29;
     overflow: auto;
 }

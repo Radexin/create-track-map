@@ -128,6 +128,7 @@ sealed class ScheduleInstruction(
 @Serializable
 data class ScheduleInstructionDestination(
     val stationName : String,
+    val ticksToComplete : Int,
 ) : ScheduleInstruction(instructionType = "Destination")
 
 @Serializable
@@ -146,12 +147,12 @@ data class CreateSchedule(
   val cycling: Boolean,
   val paused: Boolean,
   val currentEntry: Int,
+  val ticksInTransit: Int,
 )
 
 @Serializable
 data class Path(
     val path : List<Edge>,
-    val arrivingInSeconds : Int,
     val tripDistance : Double,
     val distanceToDrive : Double
 )

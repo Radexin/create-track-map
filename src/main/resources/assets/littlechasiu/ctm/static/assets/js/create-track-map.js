@@ -328,8 +328,7 @@ function startMapUpdates() {
 }
 
 function getTrainInfoHTML(train){
-  let schedule = "<div class='train-name'><h3>" + train.name + "</h3><hr>"
-
+  let schedule = "<hr>"
   if(train.schedule) {
     let currentInstruction = train.schedule.currentEntry
     let instructions = train.schedule.instructions
@@ -340,22 +339,27 @@ function getTrainInfoHTML(train){
       schedule += "<span>Next destination: Unknown</span>"
     }
     schedule += "<br>"
-    schedule += "<span>Time until arrival: Unknown</span><br>"
+
+    schedule += "<span>Time until arrival: " + ticksToMMSS(calculateRemainingTicks(train, train.schedule.currentEntry)) + "</span><br>"
+
 
     if(train.currentPath.tripDistance === 0){
-      schedule += "<span>Distance to destination: Arrived</span>"
+      schedule += "<span>Distance: Arrived</span>"
     }else {
-      schedule += "<span>Distance to destination: " + Math.floor(train.currentPath.distanceToDrive) + "/" + Math.floor(train.currentPath.tripDistance) + " blocks</span>"
+      schedule += "<span>Distance: " + Math.floor(train.currentPath.distanceToDrive) + "/" + Math.floor(train.currentPath.tripDistance) + " blocks</span>"
     }
     schedule += "<hr>"
 
     train.schedule.instructions.forEach((instruction, i) => {
       if (instruction.instructionType === "Destination") {
-        schedule += "<span>" + instruction.stationName;
+        let className = "destination"
         if (i === train.schedule.currentEntry) {
-          schedule += "&#8592;"
+          className += " marked"
         }
-        schedule += "</span><br>";
+        schedule += "<div class=\"" + className + "\">"
+        schedule += "<span>" + instruction.stationName + "</span>"
+        schedule += "<span style='text-align: right;'>" + ticksToMMSS(calculateRemainingTicks(train, i))
+        schedule += "</span></div>";
       }
     })
 
@@ -366,10 +370,40 @@ function getTrainInfoHTML(train){
 
 let openTrainInfos = {}
 function openTrainInfo(train){
-  var win =  L.control.window(map,{content:getTrainInfoHTML(train)}).show()
+  var win = L.control.window(map,{title:train.name,content:getTrainInfoHTML(train)}).show()
   win._closeButton.addEventListener("click", function(event){
     delete openTrainInfos[train.id]
   })
 
   openTrainInfos[train.id] = win
+}
+
+function calculateRemainingTicks(train, instructionIndex){
+  let instructions = train.schedule.instructions
+  let currentIndex = train.schedule.currentEntry
+
+  let totalTicks = 0
+  for (let i = 0; i < instructions.length; i++) {
+    let index = (currentIndex + i)%instructions.length
+    if(instructions[index].instructionType === "Destination"){
+      if(instructions[index].ticksToComplete === -1){
+        return "Unknown"
+      }
+      totalTicks += instructions[index].ticksToComplete
+    }
+    if(index === instructionIndex){
+      break
+    }
+  }
+  return totalTicks - train.schedule.ticksInTransit
+}
+
+function ticksToMMSS(ticks) {
+  if(ticks === "Unknown"){
+    return "Unknown"
+  }
+  let seconds = Math.floor(ticks / 20)
+  let minutes = Math.floor(seconds / 60);
+  let remainingSeconds = seconds % 60;
+  return (minutes < 10 ? '0' : '') + minutes + ':' + (remainingSeconds < 10 ? '0' : '') + remainingSeconds;
 }

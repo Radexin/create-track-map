@@ -9,8 +9,11 @@ import com.simibubi.create.content.trains.graph.TrackEdge
 import com.simibubi.create.content.trains.graph.TrackGraph
 import com.simibubi.create.content.trains.graph.TrackNode
 import com.simibubi.create.content.trains.graph.TrackNodeLocation
+import com.simibubi.create.content.trains.schedule.Schedule
 import com.simibubi.create.content.trains.schedule.ScheduleEntry
 import com.simibubi.create.content.trains.schedule.ScheduleRuntime
+import com.simibubi.create.content.trains.schedule.condition.ScheduleWaitCondition
+import com.simibubi.create.content.trains.schedule.condition.ScheduledDelay
 import com.simibubi.create.content.trains.schedule.condition.FluidThresholdCondition
 import com.simibubi.create.content.trains.schedule.condition.IdleCargoCondition
 import com.simibubi.create.content.trains.schedule.condition.ItemThresholdCondition
@@ -95,14 +98,20 @@ val Carriage.sendable
       },
     )
 
-fun getInstructions(instructions: List<ScheduleEntry>): ArrayList<ScheduleInstruction> {
+fun getInstructions(scheduleRuntime: ScheduleRuntime): ArrayList<ScheduleInstruction> {
   val result: ArrayList<ScheduleInstruction> = ArrayList()
+  val instructions = scheduleRuntime.schedule.entries
 
-  for (entry in instructions) {
+  val field = ScheduleRuntime::class.java.getDeclaredField("predictionTicks")
+  field.isAccessible = true
+  @Suppress("UNCHECKED_CAST")
+  val predictionTicks = field.get(scheduleRuntime) as List<Int>
+
+  instructions.forEachIndexed { i, entry ->
     when (val instruction = entry.instruction) {
       is DestinationInstruction -> {
-        val stationName = instruction.summary.second.string
-        result.add(ScheduleInstructionDestination(stationName = stationName))
+        var stationName = instruction.summary.second.string
+        result.add(ScheduleInstructionDestination(stationName = stationName, ticksToComplete = predictionTicks[i]))
       }
       is ChangeTitleInstruction -> {
         val newName = instruction.scheduleTitle
@@ -119,11 +128,17 @@ fun getInstructions(instructions: List<ScheduleEntry>): ArrayList<ScheduleInstru
 
 val ScheduleRuntime.sendable
   get() = schedule?.let {
+    val field = ScheduleRuntime::class.java.getDeclaredField("ticksInTransit")
+    field.isAccessible = true
+    val currentTime = field.get(this) as Int
+
+
     CreateSchedule(
-            cycling = it.cyclic,
-            instructions = getInstructions(it.entries),
-            paused = paused,
-            currentEntry = currentEntry,
+      cycling = it.cyclic,
+      instructions = getInstructions(this),
+      paused = paused,
+      currentEntry = currentEntry,
+      ticksInTransit = currentTime,
     )
   }
 
@@ -148,7 +163,7 @@ private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNo
 
   var tEdge: TrackEdge = startEdge
 
-  var direction = Vec3(0.0, 0.0, 0.0)
+  var direction: Vec3
   var reachedEnd = false
   val MAX_PREDICTIONS = 50;
 
@@ -184,7 +199,7 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   val graph = navigation?.train?.graph
   val result : ArrayList<Edge> = ArrayList()
   if(navigation == null || graph == null || navigation.destination == null){
-    return Path(result, -1,0.0,0.0)
+    return Path(result,0.0,0.0)
   }
   val field = Navigation::class.java.getDeclaredField("currentPath")
   field.isAccessible = true
@@ -194,7 +209,7 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   val firstEdge: TrackEdge = graph.getConnection(navigation.train.endpointEdges.first)
   val lastEdge: TrackEdge = getEdgeFromStation(navigation.destination, graph)
   if(firstEdge == lastEdge){
-    return Path(result, -1,0.0,0.0)
+    return Path(result,0.0,0.0)
   }
 
   result.add(firstEdge.sendable as Edge)
@@ -216,7 +231,7 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
       result.addAll(pathFromTo(trackEdge, graph, currentPath[i + 1].first))
     }
   }
-  return Path(result, -1,navigation.distanceStartedAt,navigation.distanceToDestination)
+  return Path(result,navigation.distanceStartedAt,navigation.distanceToDestination)
 }
 
 val Train.sendable: CreateTrain
