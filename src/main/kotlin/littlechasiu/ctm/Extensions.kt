@@ -63,6 +63,7 @@ val TrackNode.dimensionLocation: DimensionLocation
   get() =
     DimensionLocation(location.dimension.string, location.sendable)
 
+@Suppress("IMPLICIT_CAST_TO_ANY")
 val TrackEdge.sendable
   get() =
     if (isInterDimensional)
@@ -106,7 +107,7 @@ fun getInstructions(scheduleRuntime: ScheduleRuntime): ArrayList<ScheduleInstruc
   instructions.forEachIndexed { i, entry ->
     when (val instruction = entry.instruction) {
       is DestinationInstruction -> {
-        var stationName = instruction.summary.second.string
+        val stationName = instruction.summary.second.string
         result.add(ScheduleInstructionDestination(stationName = stationName, ticksToComplete = predictionTicks[i]))
       }
       is ChangeTitleInstruction -> {
@@ -162,7 +163,7 @@ private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNo
 
   var direction: Vec3
   var reachedEnd = false
-  val MAX_PREDICTIONS = 50;
+  val MAX_PREDICTIONS = 50
 
   var j = 0
   while (!reachedEnd) {

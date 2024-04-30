@@ -1,6 +1,5 @@
 package littlechasiu.ctm
 
-import com.ibm.icu.impl.locale.Extension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel

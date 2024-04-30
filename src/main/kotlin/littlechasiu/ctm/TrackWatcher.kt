@@ -25,7 +25,6 @@ import kotlin.time.Duration.Companion.seconds
 class TrackWatcher() {
   var enable: Boolean = true
   var watchInterval: Duration = 0.5.seconds
-  var enableNavigationTracks: Boolean = true
   private var stopping: Boolean = false
   private var thread: Thread? = null
 
