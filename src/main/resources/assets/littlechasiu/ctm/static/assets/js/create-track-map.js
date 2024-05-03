@@ -218,7 +218,9 @@ function startMapUpdates() {
   dmgr.onTrainStatus(({ trains }) => {
     //lmgr.clearTrains()
     lmgr.clearTrainPaths()
+
     tmgr.update(trains)
+
     let whitelist = []
     trains.forEach((train) => {
       let leadCar = null
@@ -370,7 +372,7 @@ function getTrainInfoHTML(train){
 
 let openTrainInfos = {}
 function openTrainInfo(train){
-  var win = L.control.window(map,{title:train.name,content:getTrainInfoHTML(train)}).show()
+  var win = L.control.window(map,{title:train.name,content:getTrainInfoHTML(train)}).showOn([100,100])
   win._closeButton.addEventListener("click", function(event){
     delete openTrainInfos[train.id]
   })
@@ -401,6 +403,9 @@ function calculateRemainingTicks(train, instructionIndex){
 function ticksToMMSS(ticks) {
   if(ticks === "Unknown"){
     return "Unknown"
+  }
+  if(ticks < 0){
+    ticks = 0
   }
   let seconds = Math.floor(ticks / 20)
   let minutes = Math.floor(seconds / 60);
