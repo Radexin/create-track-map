@@ -95,6 +95,27 @@ val Carriage.sendable
       },
     )
 
+val ScheduleRuntime.sendable
+  get() = schedule?.let {
+    val field = ScheduleRuntime::class.java.getDeclaredField("ticksInTransit")
+    field.isAccessible = true
+    val currentTime = field.get(this) as Int
+
+
+    CreateSchedule(
+      cycling = it.cyclic,
+      instructions = getInstructions(this),
+      paused = paused,
+      currentEntry = currentEntry,
+      ticksInTransit = currentTime,
+    )
+  }
+
+/**
+ * gets schedule instructions for a train
+ * @param scheduleRuntime ScheduleRuntime object associated with the Train
+ * @return ArrayList<ScheduleInstruction> result
+ */
 fun getInstructions(scheduleRuntime: ScheduleRuntime): ArrayList<ScheduleInstruction> {
   val result: ArrayList<ScheduleInstruction> = ArrayList()
   val instructions = scheduleRuntime.schedule.entries
@@ -123,23 +144,32 @@ fun getInstructions(scheduleRuntime: ScheduleRuntime): ArrayList<ScheduleInstruc
   return result
 }
 
-val ScheduleRuntime.sendable
-  get() = schedule?.let {
-    val field = ScheduleRuntime::class.java.getDeclaredField("ticksInTransit")
-    field.isAccessible = true
-    val currentTime = field.get(this) as Int
-
-
-    CreateSchedule(
-      cycling = it.cyclic,
-      instructions = getInstructions(this),
-      paused = paused,
-      currentEntry = currentEntry,
-      ticksInTransit = currentTime,
+val Train.sendable: CreateTrain
+  get() {
+    return CreateTrain(
+            id = id,
+            name = name.string,
+            owner = null,
+            cars = carriages.map { it.sendable }.toList(),
+            speed = speed,
+            backwards = speed < 0,
+            stopped = speed == 0.0,
+            schedule = runtime.sendable,
+            currentPath = getCurrentTrainPath(navigation),
     )
   }
 
-private fun getNextEdge(graph: TrackGraph, trackNode: TrackNode, trackEdge: TrackEdge, direction: Vec3) : TrackEdge?{
+/*Path calculation methods*/
+
+/**
+ * Calculates next TrackEdge when the train isn't turning.
+ * @param graph TrackGraph the train is currently on.
+ * @param trackEdge TrackEdge the train is currently on.
+ * @param trackNode TrackNode the train is driving towards
+ * @param direction Vec3 direction where the track / train is pointing
+ * @return TrackEdge result
+ */
+private fun getNextEdge(graph: TrackGraph, trackEdge: TrackEdge, trackNode: TrackNode, direction: Vec3) : TrackEdge?{
   var result : TrackEdge? = null
   var biggest = Double.MIN_VALUE
   graph.getConnectionsFrom(trackNode).forEach { key, value ->
@@ -155,7 +185,16 @@ private fun getNextEdge(graph: TrackGraph, trackNode: TrackNode, trackEdge: Trac
   return result
 }
 
-private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNode) : ArrayList<Edge> {
+/**
+ * Calculates path when the train keeps going without turning.
+ * This is not a pathfinder endNode must be reachable with no turns.
+ * Method stops after 50 itterations by itself
+ * @param startEdge TrackEdge start point
+ * @param endNode TrackEdge end point
+ * @param graph TrackGraph the train is currently on
+ * @return ArrayList<Edge> result
+ */
+private fun pathFromTo(startEdge: TrackEdge, endNode: TrackNode, graph: TrackGraph) : ArrayList<Edge> {
   //BEWARE! this method only goes straight this is not a pathfinder. It's used to get from last turn to the station
   val result = ArrayList<Edge>()
 
@@ -168,7 +207,7 @@ private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNo
   var j = 0
   while (!reachedEnd) {
     direction = tEdge.getDirection(false)
-    tEdge = getNextEdge(graph, tEdge.node2, tEdge, direction) ?: return result
+    tEdge = getNextEdge(graph, tEdge, tEdge.node2, direction) ?: return result
 
     j++
     if (tEdge.node1.netId == endNode.netId) {
@@ -187,13 +226,23 @@ private fun pathFromTo(startEdge: TrackEdge, graph: TrackGraph, endNode: TrackNo
   return result
 }
 
+/**
+ * Gets the TrackEdge a train station
+ * @param station GlobalStation train station
+ * @param graph TrackGraph the train station is on
+ * @return TrackEdge result
+ */
 private fun getEdgeFromStation(station: GlobalStation, graph: TrackGraph) : TrackEdge {
   val firstNode = graph.locateNode(station.edgeLocation.first)
   val secondNode = graph.locateNode(station.edgeLocation.second)
   return graph.getConnection(Couple.create(firstNode, secondNode))
 }
 
-
+/**
+ * Calculates the current path the train is taking
+ * @param navigation Navigation object of Train
+ * @return Path information object
+ */
 private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   val graph = navigation?.train?.graph
   val result : ArrayList<Edge> = ArrayList()
@@ -214,10 +263,10 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   result.add(firstEdge.sendable as Edge)
   result.add(lastEdge.sendable as Edge)
   if(currentPath.isNotEmpty()){
-    result.addAll(pathFromTo(firstEdge, graph, currentPath[0].first))
-    result.addAll(pathFromTo(graph.getConnection(currentPath[currentPath.size - 1]), graph, lastEdge.node1))
+    result.addAll(pathFromTo(firstEdge, currentPath[0].first, graph))
+    result.addAll(pathFromTo(graph.getConnection(currentPath[currentPath.size - 1]), lastEdge.node1, graph))
   }else{
-    result.addAll(pathFromTo(firstEdge, graph, lastEdge.node1))
+    result.addAll(pathFromTo(firstEdge, lastEdge.node1, graph))
   }
 
   currentPath.forEachIndexed{i, obj ->
@@ -227,23 +276,8 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
     result.add(edge)
 
     if(i < currentPath.size - 1){
-      result.addAll(pathFromTo(trackEdge, graph, currentPath[i + 1].first))
+      result.addAll(pathFromTo(trackEdge, currentPath[i + 1].first, graph))
     }
   }
   return Path(result,navigation.distanceStartedAt,navigation.distanceToDestination)
 }
-
-val Train.sendable: CreateTrain
-  get() {
-    return CreateTrain(
-            id = id,
-            name = name.string,
-            owner = null,
-            cars = carriages.map { it.sendable }.toList(),
-            speed = speed,
-            backwards = speed < 0,
-            stopped = speed == 0.0,
-            schedule = runtime.sendable,
-            currentPath = getCurrentTrainPath(navigation),
-    )
-  }
