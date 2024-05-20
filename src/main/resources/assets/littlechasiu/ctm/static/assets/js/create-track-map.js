@@ -330,27 +330,40 @@ function startMapUpdates() {
 }
 
 function getTrainInfoHTML(train){
-  let schedule = "<hr>"
+  let htmlData = "<hr>"
+  htmlData += "<span>Speed: " + Math.floor(train.speed * 100) + "%</span><br>"
+  if(train.stopped){
+    htmlData += "<span>Status: Stopped</span><br>"
+  }else{
+    htmlData += "<span>Status: Moving</span><br>"
+  }
+  if(train.schedule){
+    htmlData += "<span>Mode: Schedule</span>"
+  }else{
+    htmlData += "<span>Mode: Manual</span>"
+    return htmlData
+  }
+  htmlData += "<hr>"
   if(train.schedule) {
     let currentInstruction = train.schedule.currentEntry
     let instructions = train.schedule.instructions
-    schedule += "<span class=\"on-schedule\">On schedule</span><br>"
+    htmlData += "<span class=\"on-schedule\">On schedule</span><br>"
     if(instructions[currentInstruction].instructionType === "Destination") {
-      schedule += "<span>Next destination: " + instructions[currentInstruction].stationName + "</span>"
+      htmlData += "<span>Next destination: " + instructions[currentInstruction].stationName + "</span>"
     }else{
-      schedule += "<span>Next destination: Unknown</span>"
+      htmlData += "<span>Next destination: Unknown</span>"
     }
-    schedule += "<br>"
+    htmlData += "<br>"
 
-    schedule += "<span>Time until arrival: " + ticksToMMSS(calculateRemainingTicks(train, train.schedule.currentEntry)) + "</span><br>"
+    htmlData += "<span>Time until arrival: " + ticksToMMSS(calculateRemainingTicks(train, train.schedule.currentEntry)) + "</span><br>"
 
 
     if(train.currentPath.tripDistance === 0){
-      schedule += "<span>Distance: Arrived</span>"
+      htmlData += "<span>Distance: Arrived</span>"
     }else {
-      schedule += "<span>Distance: " + Math.floor(train.currentPath.distanceToDrive) + "/" + Math.floor(train.currentPath.tripDistance) + " blocks</span>"
+      htmlData += "<span>Distance: " + Math.floor(train.currentPath.distanceToDrive) + "/" + Math.floor(train.currentPath.tripDistance) + " blocks</span>"
     }
-    schedule += "<hr>"
+    htmlData += "<hr>"
 
     train.schedule.instructions.forEach((instruction, i) => {
       if (instruction.instructionType === "Destination") {
@@ -358,16 +371,16 @@ function getTrainInfoHTML(train){
         if (i === train.schedule.currentEntry) {
           className += " marked"
         }
-        schedule += "<div class=\"" + className + "\">"
-        schedule += "<span>" + instruction.stationName + "</span>"
-        schedule += "<span style='text-align: right;'>" + ticksToMMSS(calculateRemainingTicks(train, i))
-        schedule += "</span></div>";
+        htmlData += "<div class=\"" + className + "\">"
+        htmlData += "<span>" + instruction.stationName + "</span>"
+        htmlData += "<span style='text-align: right;'>" + ticksToMMSS(calculateRemainingTicks(train, i))
+        htmlData += "</span></div>";
       }
     })
 
   }
-  schedule += "</div>"
-  return schedule
+  htmlData += "</div>"
+  return htmlData
 }
 
 let openTrainInfos = {}

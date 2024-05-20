@@ -149,8 +149,12 @@ L.control.trainList = (layerManager) =>
     itemClassName: "train",
     tooltip: "Trains",
     coordsFunction: (t) => {
-      const c = t.cars[0].leading
-      return [c.dimension, c.location.x, c.location.y, c.location.z]
+      if(t.cars[0].leading) {
+        const c = t.cars[0].leading
+        return [c.dimension, c.location.x, c.location.y, c.location.z]
+      }else{
+        return ["minecraft:overworld",0,0,0]
+      }
     },
     layerManager,
   })
