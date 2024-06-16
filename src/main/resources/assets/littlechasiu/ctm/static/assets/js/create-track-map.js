@@ -331,7 +331,7 @@ function startMapUpdates() {
 
 function getTrainInfoHTML(train){
   let htmlData = "<hr>"
-  htmlData += "<span>Speed: " + Math.floor(train.speed * 100) + "%</span><br>"
+  htmlData += "<span>Speed: " + Math.abs(train.speed * 20).toFixed(1) + " Blocks/s</span><br>"
   if(train.stopped){
     htmlData += "<span>Status: Stopped</span><br>"
   }else{

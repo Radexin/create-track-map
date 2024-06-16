@@ -188,21 +188,20 @@ private fun getNextEdge(graph: TrackGraph, trackEdge: TrackEdge, trackNode: Trac
 /**
  * Calculates path when the train keeps going without turning.
  * This is not a pathfinder endNode must be reachable with no turns.
- * Method stops after 50 itterations by itself
+ * Method stops after 100 iterations by itself
  * @param startEdge TrackEdge start point
  * @param endNode TrackEdge end point
  * @param graph TrackGraph the train is currently on
  * @return ArrayList<Edge> result
  */
-private fun pathFromTo(startEdge: TrackEdge, endNode: TrackNode, graph: TrackGraph) : ArrayList<Edge> {
-  //BEWARE! this method only goes straight this is not a pathfinder. It's used to get from last turn to the station
+private fun straightLinePathToEndNode(startEdge: TrackEdge, endNode: TrackNode, graph: TrackGraph) : ArrayList<Edge> {
   val result = ArrayList<Edge>()
 
   var tEdge: TrackEdge = startEdge
 
   var direction: Vec3
   var reachedEnd = false
-  val MAX_PREDICTIONS = 50
+  val MAX_PREDICTIONS = 100
 
   var j = 0
   while (!reachedEnd) {
@@ -254,7 +253,13 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   @Suppress("UNCHECKED_CAST")
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
-  val firstEdge: TrackEdge = graph.getConnection(navigation.train.endpointEdges.first)
+  val firstNode = navigation.train.endpointEdges.first.first
+  val secondNode = navigation.train.endpointEdges.first.second
+  val firstEdge: TrackEdge = if(navigation.train.speed > 0)
+                              graph.getConnection(Couple.create(firstNode, secondNode))
+                              else
+                              graph.getConnection(Couple.create(secondNode, firstNode)) // get the "inverted" edge when driving backwards
+
   val lastEdge: TrackEdge = getEdgeFromStation(navigation.destination, graph)
   if(firstEdge == lastEdge){
     return Path(result,0.0,0.0)
@@ -263,10 +268,10 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   result.add(firstEdge.sendable as Edge)
   result.add(lastEdge.sendable as Edge)
   if(currentPath.isNotEmpty()){
-    result.addAll(pathFromTo(firstEdge, currentPath[0].first, graph))
-    result.addAll(pathFromTo(graph.getConnection(currentPath[currentPath.size - 1]), lastEdge.node1, graph))
+    result.addAll(straightLinePathToEndNode(firstEdge, currentPath[0].first, graph))
+    result.addAll(straightLinePathToEndNode(graph.getConnection(currentPath[currentPath.size - 1]), lastEdge.node1, graph))
   }else{
-    result.addAll(pathFromTo(firstEdge, lastEdge.node1, graph))
+    result.addAll(straightLinePathToEndNode(firstEdge, lastEdge.node1, graph))
   }
 
   currentPath.forEachIndexed{i, obj ->
@@ -276,7 +281,7 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
     result.add(edge)
 
     if(i < currentPath.size - 1){
-      result.addAll(pathFromTo(trackEdge, currentPath[i + 1].first, graph))
+      result.addAll(straightLinePathToEndNode(trackEdge, currentPath[i + 1].first, graph))
     }
   }
   return Path(result,navigation.distanceStartedAt,navigation.distanceToDestination)
