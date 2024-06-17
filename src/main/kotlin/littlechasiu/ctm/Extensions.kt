@@ -253,8 +253,9 @@ private fun getCurrentTrainPath(navigation: Navigation?) : Path{
   @Suppress("UNCHECKED_CAST")
   val currentPath = field.get(navigation) as List<Couple<TrackNode>>
 
-  val firstNode = navigation.train.endpointEdges.first.first
-  val secondNode = navigation.train.endpointEdges.first.second
+  val endPointEdge = if(navigation.train.currentlyBackwards) navigation.train.endpointEdges.second else navigation.train.endpointEdges.first
+  val firstNode = endPointEdge.first
+  val secondNode = endPointEdge.second
   val firstEdge: TrackEdge = if(navigation.train.currentlyBackwards)
                               graph.getConnection(Couple.create(secondNode, firstNode)) // get the "inverted" edge when driving backwards
                               else
