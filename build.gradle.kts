@@ -17,6 +17,7 @@ val minecraft_version: String by project
 val maven_group: String by project
 val archives_base_name: String by project
 val create_version_short: String by project
+val ponder_version: String by project
 
 version = mod_version
 group = maven_group
@@ -33,6 +34,7 @@ repositories {
   maven("https://thedarkcolour.github.io/KotlinForForge/")
   maven("https://maven.blamejared.com/")  // JEI
   maven("https://squiddev.cc/maven/")  // CC: Tweaked
+  maven("https://maven.createmod.net")  // Ponder (Catnip)
 }
 
 val shadowDep: Configuration by configurations.creating
@@ -55,6 +57,7 @@ dependencies {
   minecraft("net.neoforged:forge:${minecraft_version}-${forge_version}")
   implementation("thedarkcolour:kotlinforforge:$forge_kotlin_version")
   implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim"))
+  implementation("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
 
   shadowDep("io.ktor:ktor-server-core-jvm:$ktor_version")
   shadowDep("io.ktor:ktor-server-cio-jvm:$ktor_version")
