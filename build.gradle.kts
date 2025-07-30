@@ -149,6 +149,7 @@ modrinth {
   versionName.set("CTM NeoForge $mod_version")
   gameVersions.add(minecraft_version)
   loaders.add("neoforge")
+  loaders.add("forge")
   dependencies {
     required.project("create")
     required.project("kotlin-for-forge")
