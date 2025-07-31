@@ -95,7 +95,7 @@ class LayerManager {
   switchDimensions(from, to) {
     this._hideDimension(from)
     this._showDimension(to)
-    this.dimensionLayers[dim].addTo(map)
+    this.dimensionLayers[to].addTo(map)
   }
 
   _onDimensionChange({ layer }) {
