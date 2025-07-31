@@ -63,9 +63,6 @@ dependencies {
   shadowDep("io.ktor:ktor-server-cio-jvm:$ktor_version")
   shadowDep("io.ktor:ktor-server-cors-jvm:$ktor_version")
   shadowDep("org.jetbrains.kotlin-wrappers:kotlin-css-jvm:$kotlin_css_version")
-
-  // included in Kotlin for Forge
-  compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlin_json_version")
 }
 
 val targetJavaVersion = 17
@@ -124,10 +121,14 @@ tasks {
       exclude(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-.*"))
       exclude(dependency("org.slf4j:.*"))
     }
-    relocate("com.typesafe.config", "littlechasiu.ctm.com.typesafe.config")
-    relocate("org.fusesource.jansi", "littlechasiu.ctm.org.fusesource.jansi")
 
-
+    fun relocate(origin: String) = relocate(origin, "littlechasiu.ctm.dependencies.$origin")
+    relocate("com.typesafe.config")
+    relocate("org.fusesource.jansi")
+    relocate("kotlinx.css")
+    relocate("io.ktor")
+    relocate("org.intellij.lang.annotations")
+    relocate("org.jetbrains.annotations")
 
     configurations = listOf(shadowDep)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
