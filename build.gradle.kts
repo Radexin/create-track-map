@@ -4,11 +4,11 @@ import com.modrinth.minotaur.TaskModrinthUpload
 import net.minecraftforge.gradle.userdev.tasks.RenameJarInPlace
 
 plugins {
-  kotlin("jvm") version "1.8.10"
-  kotlin("plugin.serialization") version "1.8.10"
+  kotlin("jvm") version "2.1.0"
+  kotlin("plugin.serialization") version "2.1.0"
   java
   id("net.neoforged.gradle") version "[6.0.13, 6.2)"
-  id("com.github.johnrengelman.shadow") version "7.1.2"
+  id("com.github.johnrengelman.shadow") version "8.1.1"
   id("com.modrinth.minotaur") version "2.+"
 }
 
