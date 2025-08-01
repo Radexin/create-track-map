@@ -16,9 +16,12 @@ import littlechasiu.ctm.model.*
 import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import net.minecraftforge.fml.ModList
 
 object BlueMapIntegration {
   var mapStyle = MapStyle()
+
+  private var installed = ModList.get().isLoaded("bluemap")
 
   private const val BLUEMAP_TRACK_CURVE_POINTS = 10
 
@@ -513,26 +516,28 @@ object BlueMapIntegration {
   }
 
   fun update() {
-    BlueMapAPI.getInstance().ifPresent { blueMap ->
-      blueMap.maps.forEach { map ->
-        map.markerSets.remove(BLUEMAP_TRACK_ID)
-        map.markerSets.remove(BLUEMAP_STATION_ID)
-        map.markerSets.remove(BLUEMAP_TRAIN_ID)
-        map.markerSets.remove(BLUEMAP_SIGNAL_ID)
-      }
+    if (installed) {
+      BlueMapAPI.getInstance().ifPresent { blueMap ->
+        blueMap.maps.forEach { map ->
+          map.markerSets.remove(BLUEMAP_TRACK_ID)
+          map.markerSets.remove(BLUEMAP_STATION_ID)
+          map.markerSets.remove(BLUEMAP_TRAIN_ID)
+          map.markerSets.remove(BLUEMAP_SIGNAL_ID)
+        }
 
-      updateTracks(blueMap, TrackMap.network.tracks)
+        updateTracks(blueMap, TrackMap.network.tracks)
 
-      for (station in TrackMap.network.stations) {
-        updateStation(blueMap, station)
-      }
+        for (station in TrackMap.network.stations) {
+          updateStation(blueMap, station)
+        }
 
-      for (train in TrackMap.trains.trains) {
-        updateTrain(blueMap, train)
-      }
+        for (train in TrackMap.trains.trains) {
+          updateTrain(blueMap, train)
+        }
 
-      for (signal in TrackMap.signals.signals) {
-        updateSignal(blueMap, signal)
+        for (signal in TrackMap.signals.signals) {
+          updateSignal(blueMap, signal)
+        }
       }
     }
   }

@@ -63,7 +63,7 @@ dependencies {
   shadowDep("io.ktor:ktor-server-cio-jvm:$ktor_version")
   shadowDep("io.ktor:ktor-server-cors-jvm:$ktor_version")
   shadowDep("org.jetbrains.kotlin-wrappers:kotlin-css-jvm:$kotlin_css_version")
-  compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:v2.5.1")
+  compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:v2.7.0")
 }
 
 val targetJavaVersion = 17
