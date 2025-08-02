@@ -145,6 +145,9 @@ data class Config @OptIn(ExperimentalSerializationApi::class) constructor(
   @SerialName("enable_navigation_tracks")
   @EncodeDefault
   val enableNavigationTracks: Boolean = true,
+  @SerialName("bluemap_integration")
+  @EncodeDefault
+  val enableBluemap: Boolean = true,
 
 
   @SerialName("map_style")

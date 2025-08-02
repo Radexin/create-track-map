@@ -23,6 +23,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.time.Duration.Companion.seconds
+import net.minecraftforge.fml.ModList
 
 @Mod(TrackMap.MODID)
 object TrackMap {
@@ -89,6 +90,7 @@ object TrackMap {
     server.dimensions = config.dimensions
     server.layers = config.layers
     BlueMapIntegration.mapStyle = config.mapStyle
+    BlueMapIntegration.enabled = ModList.get().isLoaded("bluemap") && config.enableBluemap
   }
 
   private fun reload() {

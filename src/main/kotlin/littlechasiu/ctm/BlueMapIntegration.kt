@@ -16,12 +16,11 @@ import littlechasiu.ctm.model.*
 import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import net.minecraftforge.fml.ModList
 
 object BlueMapIntegration {
   var mapStyle = MapStyle()
 
-  private var installed = ModList.get().isLoaded("bluemap")
+  var enabled = false
 
   private const val BLUEMAP_TRACK_CURVE_POINTS = 10
 
@@ -516,7 +515,7 @@ object BlueMapIntegration {
   }
 
   fun update() {
-    if (installed) {
+    if (enabled) {
       BlueMapAPI.getInstance().ifPresent { blueMap ->
         blueMap.maps.forEach { map ->
           map.markerSets.remove(BLUEMAP_TRACK_ID)
