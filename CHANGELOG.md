@@ -1,1 +1,5 @@
-- Ported to Create 6.0.6
+- Automatic map panning when switching dimensions by clicking on a portal fixed
+- Fixed few crashes
+- Added train schedule and planned path on top of the map
+- Added station schedule
+- Added BlueMap support
