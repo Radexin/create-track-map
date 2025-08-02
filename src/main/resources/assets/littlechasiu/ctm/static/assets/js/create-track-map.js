@@ -62,8 +62,8 @@ fetch("api/config.json")
     startMapUpdates()
   })
 
-function htmlEscape(str) {
-  return str
+  function htmlEscape(str) {
+    return str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

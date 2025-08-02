@@ -435,11 +435,11 @@ object BlueMapIntegration {
       val scheduleHtml =
         if (train.schedule != null)
           "<ul>" +
-            train.schedule.entries.mapIndexed { entryIndex, entry ->
+            train.schedule.instructions.mapIndexed { entryIndex, entry ->
               var entryHtml = ""
               val style = if (train.schedule.currentEntry == entryIndex) "" else "list-style-type: none"
 
-              if (entry.instruction.destination != null) entryHtml += htmlEscape(entry.instruction.destination)
+              if (entry is ScheduleInstructionDestination) entryHtml += htmlEscape(entry.stationName)
 
               if (entryHtml == "") return@mapIndexed ""
               "<li style=\"$style\">$entryHtml</li>"

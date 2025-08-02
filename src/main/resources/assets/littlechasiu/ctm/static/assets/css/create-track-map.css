@@ -85,15 +85,6 @@ body {
   fill: var(--lead-car-color);
 }
 
-.train-schedule {
-  margin: 0;
-  padding-left: 1rem;
-  list-style-type: none;
-}
-.train-schedule .train-schedule-current {
-  list-style-type: disc;
-}
-
 .station-schedule,
 .station-schedule th,
 .station-schedule td {

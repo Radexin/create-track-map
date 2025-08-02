@@ -58,12 +58,22 @@ dependencies {
   implementation("thedarkcolour:kotlinforforge:$forge_kotlin_version")
   implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim"))
   implementation("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
-
-  shadowDep("io.ktor:ktor-server-core-jvm:$ktor_version")
-  shadowDep("io.ktor:ktor-server-cio-jvm:$ktor_version")
-  shadowDep("io.ktor:ktor-server-cors-jvm:$ktor_version")
-  shadowDep("org.jetbrains.kotlin-wrappers:kotlin-css-jvm:$kotlin_css_version")
   compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:v2.7.0")
+
+  shadowDep("io.ktor:ktor-server-core-jvm:$ktor_version") {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json")
+    }
+  shadowDep("io.ktor:ktor-server-cio-jvm:$ktor_version") {
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json")
+  }
+  shadowDep("io.ktor:ktor-server-cors-jvm:$ktor_version") {
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json")
+  }
+
+  shadowDep("org.jetbrains.kotlin-wrappers:kotlin-css-jvm:$kotlin_css_version")
 }
 
 val targetJavaVersion = 17
@@ -120,6 +130,7 @@ tasks {
     dependencies {
       exclude(dependency("org.jetbrains.kotlin:.*"))
       exclude(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-.*"))
+      exclude(dependency("org.jetbrains.kotlinx:kotlinx-serialization-.*"))
       exclude(dependency("org.slf4j:.*"))
     }
 

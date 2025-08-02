@@ -24,7 +24,6 @@ import com.simibubi.create.content.trains.schedule.destination.ChangeThrottleIns
 import com.simibubi.create.content.trains.schedule.destination.ChangeTitleInstruction
 import com.simibubi.create.content.trains.schedule.destination.DestinationInstruction
 import com.simibubi.create.content.trains.station.GlobalStation
-import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction
 import littlechasiu.ctm.model.*
 import net.createmod.catnip.data.Couple
 import net.minecraft.resources.ResourceKey
@@ -158,6 +157,15 @@ val Train.sendable: CreateTrain
             currentPath = getCurrentTrainPath(navigation),
     )
   }
+
+  val GlobalTrainDisplayData.TrainDeparturePrediction.sendable
+  get() =
+    StationSummaryEntry(
+      scheduleTitle = scheduleTitle.string,
+      destination = destination,
+      trainName = train.name.string,
+      ticks = ticks,
+    )
 
 /*Path calculation methods*/
 

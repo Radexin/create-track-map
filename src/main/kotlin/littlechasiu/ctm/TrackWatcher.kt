@@ -96,7 +96,7 @@ class TrackWatcher() {
         location = location.sendable,
         angle = angle,
         assembling = assembling,
-        summary = GlobalTrainDisplayData.prepare(name, 6).map { it.sendable },
+        summary = GlobalTrainDisplayData.prepare(name, 6).map { it.sendable }
       )
   }
 
